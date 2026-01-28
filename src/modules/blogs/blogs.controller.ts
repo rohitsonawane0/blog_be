@@ -2,16 +2,21 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('blogs')
 export class BlogsController {
-  constructor(private readonly blogsService: BlogsService) {}
+  constructor(private readonly blogsService: BlogsService) { }
 
   @Post()
-  create(@Body() createBlogDto: CreateBlogDto) {
-    return this.blogsService.create(createBlogDto);
+  create(@CurrentUser() user: JwtPayload, @Body() createBlogDto: CreateBlogDto) {
+    return this.blogsService.create(createBlogDto, user);
   }
 
+
+  @Public()
   @Get()
   findAll() {
     return this.blogsService.findAll();
