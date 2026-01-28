@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -59,16 +59,23 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
-      console.log(payload);
 
       const user = await this.userService.findOne(payload.sub);
       if (!user) {
-        throw new Error('User not found');
+        throw new NotFoundException('User not found');
       }
 
-      return this.getTokens(user.id, user.email, user.role);
+      const access_token = await this.jwtService.signAsync(
+        { sub: user.id, email: user.email, role: user.role },
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION_TIME') as any,
+        },
+      );
+
+      return { access_token };
     } catch (e) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
   async register(createUserDto: CreateUserDto) {
@@ -78,11 +85,11 @@ export class AuthService {
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
     const user = await this.userService.findOne(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     const isPasswordMatched = await this.hashingService.compare(changePasswordDto.oldPassword, user.password);
     if (!isPasswordMatched) {
-      throw new Error('Invalid old password');
+      throw new UnauthorizedException('Invalid old password');
     }
     const hashedPassword = await this.hashingService.hash(changePasswordDto.newPassword);
     await this.userService.updatePassword(userId, hashedPassword);
