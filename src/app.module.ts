@@ -12,6 +12,7 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from './database/connect.database';
+import { RoleGuard } from './modules/auth/guards/role.guard';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), TypeOrmModule.forRootAsync({ inject: [ConfigService], useFactory: typeOrmConfig }), UsersModule, AuthModule, BlogsModule, CommentsModule, CategoriesModule, TagsModule],
@@ -21,6 +22,10 @@ import { typeOrmConfig } from './database/connect.database';
     {
       provide: APP_GUARD,
       useClass: JwtGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
     },
   ],
 })

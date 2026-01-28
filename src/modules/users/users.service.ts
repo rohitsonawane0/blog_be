@@ -37,11 +37,28 @@ export class UsersService {
     return this.userRepository.findOne({ where: { id } });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    // Prevent updating password directly through this method
+    if (updateUserDto.password) {
+      delete updateUserDto.password;
+    }
+    await this.userRepository.update(id, updateUserDto);
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user!!S`;
+  async updatePassword(id: number, hasedPassword: string) {
+    return this.userRepository.update(id, { password: hasedPassword });
+  }
+
+  async remove(id: number) {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return this.userRepository.softDelete(id);
   }
 }

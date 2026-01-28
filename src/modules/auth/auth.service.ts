@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UsersService } from '../users/users.service';
 import { HashingService } from '../hashing/hashing.service';
 import { JwtService } from '@nestjs/jwt';
@@ -20,16 +22,15 @@ export class AuthService {
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new Error('User not found');
+      return null;
     }
     const isPasswordMatched = await this.hashingService.compare(password, user.password);
     if (!isPasswordMatched) {
-      throw new Error('Invalid password');
+      return null;
     }
     return user;
   }
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password)
+  async login(user: any) {
     return this.getTokens(user.id, user.email, user.role)
   }
   async getTokens(userId: number, email: string, role: UserRole) {
@@ -52,12 +53,40 @@ export class AuthService {
 
     return { access_token, refresh_token };
   }
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+
+  async refreshTokens(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+      console.log(payload);
+
+      const user = await this.userService.findOne(payload.sub);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return this.getTokens(user.id, user.email, user.role);
+    } catch (e) {
+      throw new Error('Invalid refresh token');
+    }
+  }
+  async register(createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    const isPasswordMatched = await this.hashingService.compare(changePasswordDto.oldPassword, user.password);
+    if (!isPasswordMatched) {
+      throw new Error('Invalid old password');
+    }
+    const hashedPassword = await this.hashingService.hash(changePasswordDto.newPassword);
+    await this.userService.updatePassword(userId, hashedPassword);
+    return { message: 'Password changed successfully' };
   }
 
   findOne(id: number) {

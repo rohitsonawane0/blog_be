@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -9,19 +9,22 @@ import type { Response } from 'express';
 import { JwtGuard } from './guards/jwt.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Public()
+  @Post('register')
+  register(@Body() createUserDto: CreateUserDto) {
+    return this.authService.register(createUserDto);
   }
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
-    const { access_token, refresh_token } = await this.authService.login(loginDto);
+  async login(@CurrentUser() user: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
+    const { access_token, refresh_token } = await this.authService.login(user);
 
     // Set Refresh Token in an HttpOnly Cookie
     response.cookie('refresh_token', refresh_token, {
@@ -36,30 +39,39 @@ export class AuthController {
   }
 
 
-  @Post('me')
-  async logout(@CurrentUser() user: JwtPayload, @Res({ passthrough: true }) response: Response) {
-    return user || {}
+  @Get('me')
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return user;
   }
 
+  @Post('logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('refresh_token');
+    return { message: 'Logged out successfully' };
+  }
 
   @Public()
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Post('refresh')
+  async refresh(@Req() request: any, @Res({ passthrough: true }) response: Response) {
+    const refreshToken = request.cookies['refresh_token'];
+    if (!refreshToken) {
+      throw new Error('Refresh token not found');
+    }
+    const { access_token, refresh_token: newRefreshToken } = await this.authService.refreshTokens(refreshToken);
+
+    response.cookie('refresh_token', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return { access_token };
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @Post('change-password')
+  changePassword(@CurrentUser('id') userId: number, @Body() changePasswordDto: ChangePasswordDto) {
+    return this.authService.changePassword(userId, changePasswordDto);
   }
 }
