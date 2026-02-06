@@ -3,10 +3,14 @@ import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Blog } from './entities/blog.entity';
-import { Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CategoriesService } from '../categories/categories.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { paginate } from 'src/common/utils/pagination.util';
+import { TagsService } from '../tags/tags.service';
+import { Tag } from '../tags/entities/tag.entity';
 
 @Injectable()
 export class BlogsService {
@@ -14,11 +18,17 @@ export class BlogsService {
     @InjectRepository(Blog)
     private readonly blogRepository: Repository<Blog>,
     private readonly categoriesService: CategoriesService,
+
   ) { }
 
   async create(createBlogDto: CreateBlogDto, user: JwtPayload) {
     if (createBlogDto.categoryId) {
       await this.validateCategory(createBlogDto.categoryId);
+    }
+
+    let tags: Tag[] = [];
+    if (createBlogDto.tagIds?.length) {
+      tags = await this.validateAndGetTags(createBlogDto.tagIds);
     }
 
     const slug = await this.createSlug(createBlogDto.title);
@@ -27,13 +37,18 @@ export class BlogsService {
       ...createBlogDto,
       slug,
       authorId: user.sub,
+      tags,
     });
     return this.blogRepository.save(blog);
   }
 
-  async findAll() {
-    return this.blogRepository.find({
-      relations: ['author', 'category'],
+  async findAll(paginationDto: PaginationDto) {
+    const { page = 1, limit = 10, search } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await this.blogRepository.findAndCount({
+      where: search ? { title: Like(`%${search}%`) } : undefined,
+      relations: ['author', 'category', 'tags'],
       select: {
         author: {
           id: true,
@@ -45,16 +60,25 @@ export class BlogsService {
           id: true,
           name: true,
           slug: true,
+        },
+        tags: {
+          id: true,
+          name: true,
+          slug: true,
         }
       },
       order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
     });
+
+    return paginate(items, total, page, limit);
   }
 
   async findOne(id: string) {
     const blog = await this.blogRepository.findOne({
       where: { id },
-      relations: ['author', 'category'],
+      relations: ['author', 'category', 'tags'],
       select: {
         author: {
           id: true,
@@ -63,6 +87,11 @@ export class BlogsService {
           role: true,
         },
         category: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+        tags: {
           id: true,
           name: true,
           slug: true,
@@ -80,7 +109,7 @@ export class BlogsService {
   async findBySlug(slug: string) {
     const blog = await this.blogRepository.findOne({
       where: { slug },
-      relations: ['author', 'category'],
+      relations: ['author', 'category', 'tags'],
       select: {
         author: {
           id: true,
@@ -89,6 +118,11 @@ export class BlogsService {
           role: true,
         },
         category: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+        tags: {
           id: true,
           name: true,
           slug: true,
@@ -110,6 +144,12 @@ export class BlogsService {
       await this.validateCategory(updateBlogDto.categoryId);
     }
 
+    if (updateBlogDto.tagIds !== undefined) {
+      blog.tags = updateBlogDto.tagIds.length
+        ? await this.validateAndGetTags(updateBlogDto.tagIds)
+        : [];
+    }
+
     // Note: Author check should be done in Controller or Guard
     Object.assign(blog, updateBlogDto);
     return this.blogRepository.save(blog);
@@ -129,6 +169,20 @@ export class BlogsService {
       }
       throw error;
     }
+  }
+
+  private async validateAndGetTags(tagIds: string[]): Promise<Tag[]> {
+    const tags = await this.blogRepository.manager.find(Tag, {
+      where: { id: In(tagIds) },
+    });
+
+    if (tags.length !== tagIds.length) {
+      const foundIds = tags.map(t => t.id);
+      const missingIds = tagIds.filter(id => !foundIds.includes(id));
+      throw new BadRequestException(`Tags not found: ${missingIds.join(', ')}`);
+    }
+
+    return tags;
   }
 
   private async createSlug(title: string): Promise<string> {
@@ -156,3 +210,4 @@ export class BlogsService {
     return slug;
   }
 }
+

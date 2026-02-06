@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Req, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Res,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -13,17 +25,22 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('register')
   register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
   }
+
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@CurrentUser() user: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
+  async login(
+    @CurrentUser() user: any,
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const { access_token, refresh_token } = await this.authService.login(user);
 
     // Set Refresh Token in an HttpOnly Cookie
@@ -38,7 +55,6 @@ export class AuthController {
     return { access_token };
   }
 
-
   @Get('me')
   getProfile(@CurrentUser() user: JwtPayload) {
     return user;
@@ -52,7 +68,10 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  async refresh(@Req() request: any, @Res({ passthrough: true }) response: Response) {
+  async refresh(
+    @Req() request: any,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const refreshToken = request.cookies['refresh_token'];
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not found');
@@ -62,9 +81,11 @@ export class AuthController {
     return { access_token };
   }
 
-
   @Post('change-password')
-  changePassword(@CurrentUser('id') userId: string, @Body() changePasswordDto: ChangePasswordDto) {
+  changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
     return this.authService.changePassword(userId, changePasswordDto);
   }
 }

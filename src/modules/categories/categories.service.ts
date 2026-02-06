@@ -1,9 +1,11 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { paginate } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class CategoriesService {
@@ -30,8 +32,17 @@ export class CategoriesService {
     return this.categoriesRepository.save(category);
   }
 
-  findAll() {
-    return this.categoriesRepository.find();
+  async findAll(paginationDto: PaginationDto) {
+    const { page = 1, limit = 10, search } = paginationDto;
+    const skip = (page - 1) * limit;
+    //0
+    const [items, total] = await this.categoriesRepository.findAndCount({
+      where: { name: search ? Like(`%${search}%`) : undefined },
+      skip,
+      take: limit,
+    });
+
+    return paginate(items, total, page, limit);
   }
 
   async findOne(id: string) {

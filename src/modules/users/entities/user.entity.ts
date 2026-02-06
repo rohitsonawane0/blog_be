@@ -1,5 +1,6 @@
 import { UserRole } from "src/common/enums/user-role.enum";
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from "typeorm";
+import { Exclude } from "class-transformer";
 
 @Entity()
 export class User {
@@ -15,6 +16,7 @@ export class User {
     @Column({ unique: true })
     email: string;
 
+    @Exclude()
     @Column({ nullable: true })
     password: string;
 
@@ -27,6 +29,8 @@ export class User {
     @UpdateDateColumn()
     updatedAt: Date;
 
+    @Exclude()
     @DeleteDateColumn()
     deletedAt: Date;
 }
+

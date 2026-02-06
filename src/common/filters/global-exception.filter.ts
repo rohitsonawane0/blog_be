@@ -29,6 +29,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
                 message = (exceptionResponse as any).message || exceptionResponse;
             }
         } else if (exception instanceof Error) {
+            console.log(exception);
             message = exception.message;
         }
 

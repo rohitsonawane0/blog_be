@@ -8,6 +8,7 @@ import {
     ManyToMany,
 } from 'typeorm';
 import { Blog } from '../../blogs/entities/blog.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity('tags')
 export class Tag {
@@ -32,6 +33,7 @@ export class Tag {
     @UpdateDateColumn()
     updatedAt: Date;
 
+    @Exclude()
     @DeleteDateColumn()
     deletedAt: Date;
 

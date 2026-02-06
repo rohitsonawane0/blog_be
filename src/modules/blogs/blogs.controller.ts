@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { Public } from 'src/common/decorators/public.decorator';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('blogs')
 export class BlogsController {
@@ -18,8 +19,8 @@ export class BlogsController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.blogsService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.blogsService.findAll(paginationDto);
   }
 
   @Get(':id')
