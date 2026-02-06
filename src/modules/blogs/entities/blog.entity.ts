@@ -4,16 +4,20 @@ import {
     CreateDateColumn,
     Entity,
     JoinColumn,
+    JoinTable,
+    ManyToMany,
     ManyToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
 import { BlogStatus } from "../enums/blog-status.enum";
+import { Category } from "../../categories/entities/category.entity";
+import { Tag } from "src/modules/tags/entities/tag.entity";
 
 @Entity()
 export class Blog {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
     @Column({ length: 100 })
     title: string;
@@ -52,6 +56,17 @@ export class Blog {
     @JoinColumn({ name: 'authorId' })
     author: User;
 
-    @Column({ nullable: true })
-    authorId: number;
+    @Column({ nullable: true, type: 'uuid' })
+    authorId: string;
+
+    @ManyToOne(() => Category, { onDelete: 'SET NULL', nullable: true })
+    @JoinColumn({ name: 'categoryId' })
+    category: Category;
+
+    @Column({ nullable: true, type: 'uuid' })
+    categoryId: string;
+
+    @ManyToMany(() => Tag, (tag) => tag.blogs, { onDelete: 'SET NULL' })
+    @JoinTable()
+    tags: Tag[]
 }

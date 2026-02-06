@@ -33,11 +33,11 @@ export class UsersService {
     return this.userRepository.find();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     return this.userRepository.findOne({ where: { id } });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
     if (!user) {
       throw new Error('User not found');
@@ -50,11 +50,11 @@ export class UsersService {
     return this.findOne(id);
   }
 
-  async updatePassword(id: number, hasedPassword: string) {
+  async updatePassword(id: string, hasedPassword: string) {
     return this.userRepository.update(id, { password: hasedPassword });
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const user = await this.findOne(id);
     if (!user) {
       throw new Error('User not found');

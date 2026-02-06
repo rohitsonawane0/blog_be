@@ -5,14 +5,15 @@ export const typeOrmConfig = (
     configService: ConfigService,
 ): TypeOrmModuleOptions => ({
     type: 'postgres',
-    url: configService.get<string>('DATABASE_URL'),
+    url: "postgresql://postgres:SuperUser@33@db.izusqhwkbzjmflsldrrj.supabase.co:5432/postgres",
     ssl: {
         rejectUnauthorized: false,
     },
     autoLoadEntities: true,
     synchronize: true,
-    logging: ['error', 'warn'],
+    // logging: ['error', 'warn'],
     extra: {
         max: 5,
     },
 });
+//

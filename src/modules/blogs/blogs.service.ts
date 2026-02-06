@@ -1,21 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Blog } from './entities/blog.entity';
 import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
+
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { CategoriesService } from '../categories/categories.service';
 
 @Injectable()
 export class BlogsService {
   constructor(
     @InjectRepository(Blog)
     private readonly blogRepository: Repository<Blog>,
+    private readonly categoriesService: CategoriesService,
   ) { }
 
   async create(createBlogDto: CreateBlogDto, user: JwtPayload) {
+    if (createBlogDto.categoryId) {
+      await this.validateCategory(createBlogDto.categoryId);
+    }
+
     const slug = await this.createSlug(createBlogDto.title);
+
     const blog = this.blogRepository.create({
       ...createBlogDto,
       slug,
@@ -26,7 +33,7 @@ export class BlogsService {
 
   async findAll() {
     return this.blogRepository.find({
-      relations: ['author'],
+      relations: ['author', 'category'],
       select: {
         author: {
           id: true,
@@ -34,15 +41,20 @@ export class BlogsService {
           lastName: true,
           role: true,
         },
+        category: {
+          id: true,
+          name: true,
+          slug: true,
+        }
       },
       order: { createdAt: 'DESC' },
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const blog = await this.blogRepository.findOne({
       where: { id },
-      relations: ['author'],
+      relations: ['author', 'category'],
       select: {
         author: {
           id: true,
@@ -50,6 +62,11 @@ export class BlogsService {
           lastName: true,
           role: true,
         },
+        category: {
+          id: true,
+          name: true,
+          slug: true,
+        }
       },
     });
     if (!blog) {
@@ -63,7 +80,7 @@ export class BlogsService {
   async findBySlug(slug: string) {
     const blog = await this.blogRepository.findOne({
       where: { slug },
-      relations: ['author'],
+      relations: ['author', 'category'],
       select: {
         author: {
           id: true,
@@ -71,6 +88,11 @@ export class BlogsService {
           lastName: true,
           role: true,
         },
+        category: {
+          id: true,
+          name: true,
+          slug: true,
+        }
       },
     });
     if (!blog) {
@@ -81,16 +103,32 @@ export class BlogsService {
     return blog;
   }
 
-  async update(id: number, updateBlogDto: UpdateBlogDto) {
+  async update(id: string, updateBlogDto: UpdateBlogDto) {
     const blog = await this.findOne(id);
+
+    if (updateBlogDto.categoryId) {
+      await this.validateCategory(updateBlogDto.categoryId);
+    }
+
     // Note: Author check should be done in Controller or Guard
     Object.assign(blog, updateBlogDto);
     return this.blogRepository.save(blog);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const blog = await this.findOne(id);
     return this.blogRepository.remove(blog);
+  }
+
+  private async validateCategory(categoryId: string) {
+    try {
+      await this.categoriesService.findOne(categoryId);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new BadRequestException(`Category with ID ${categoryId} does not exist`);
+      }
+      throw error;
+    }
   }
 
   private async createSlug(title: string): Promise<string> {

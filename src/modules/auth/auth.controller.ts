@@ -64,7 +64,7 @@ export class AuthController {
 
 
   @Post('change-password')
-  changePassword(@CurrentUser('id') userId: number, @Body() changePasswordDto: ChangePasswordDto) {
+  changePassword(@CurrentUser('id') userId: string, @Body() changePasswordDto: ChangePasswordDto) {
     return this.authService.changePassword(userId, changePasswordDto);
   }
 }

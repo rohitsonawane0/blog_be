@@ -33,7 +33,7 @@ export class AuthService {
   async login(user: any) {
     return this.getTokens(user.id, user.email, user.role)
   }
-  async getTokens(userId: number, email: string, role: UserRole) {
+  async getTokens(userId: string, email: string, role: UserRole) {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(
         { sub: userId, email, role },
@@ -82,7 +82,7 @@ export class AuthService {
     return this.userService.create(createUserDto);
   }
 
-  async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const user = await this.userService.findOne(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -96,15 +96,15 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} auth`;
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
+  update(id: string, updateAuthDto: UpdateAuthDto) {
     return `This action updates a #${id} auth`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} auth`;
   }
 }

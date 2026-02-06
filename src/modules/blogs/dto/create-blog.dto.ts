@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator";
 import { BlogStatus } from "../enums/blog-status.enum";
 
 export class CreateBlogDto {
@@ -24,4 +24,8 @@ export class CreateBlogDto {
     @IsEnum(BlogStatus)
     @IsOptional()
     status?: BlogStatus;
+
+    @IsUUID()
+    @IsOptional()
+    categoryId?: string;
 }
