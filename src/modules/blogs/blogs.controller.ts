@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -9,13 +18,15 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('blogs')
 export class BlogsController {
-  constructor(private readonly blogsService: BlogsService) { }
+  constructor(private readonly blogsService: BlogsService) {}
 
   @Post()
-  create(@CurrentUser() user: JwtPayload, @Body() createBlogDto: CreateBlogDto) {
+  create(
+    @CurrentUser() user: JwtPayload,
+    @Body() createBlogDto: CreateBlogDto,
+  ) {
     return this.blogsService.create(createBlogDto, user);
   }
-
 
   @Public()
   @Get()
@@ -33,6 +44,10 @@ export class BlogsController {
     return this.blogsService.update(id, updateBlogDto);
   }
 
+  @Delete('/all')
+  removeAll() {
+    return this.blogsService.deleteAllBlogs();
+  }
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.blogsService.remove(id);

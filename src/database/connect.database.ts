@@ -1,19 +1,17 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-
+import * as fs from 'fs';
+import * as path from 'path';
 export const typeOrmConfig = (
-    configService: ConfigService,
+  configService: ConfigService,
 ): TypeOrmModuleOptions => ({
-    type: 'postgres',
-    url: "postgresql://postgres:SuperUser@33@db.izusqhwkbzjmflsldrrj.supabase.co:5432/postgres",
-    ssl: {
-        rejectUnauthorized: false,
-    },
-    autoLoadEntities: true,
-    synchronize: true,
-    // logging: ['error', 'warn'],
-    extra: {
-        max: 5,
-    },
+  type: 'postgres',
+  url: configService.getOrThrow<string>('DATABASE_URL'),
+
+  autoLoadEntities: true,
+  synchronize: true, // ⚠️ NEVER true for RDS pros
+
+  extra: {
+    max: 10,
+  },
 });
-//

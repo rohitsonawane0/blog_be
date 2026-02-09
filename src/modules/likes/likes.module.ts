@@ -10,4 +10,5 @@ import { Like } from './entities/like.entity';
   providers: [LikesService],
   exports: [LikesService],
 })
+//0
 export class LikesModule { }

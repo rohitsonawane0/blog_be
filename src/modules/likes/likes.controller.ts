@@ -7,26 +7,32 @@ import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('likes')
 export class LikesController {
-    constructor(private readonly likesService: LikesService) { }
+  constructor(private readonly likesService: LikesService) {}
 
-    @Post('toggle')
-    toggle(@CurrentUser() user: JwtPayload, @Body() toggleLikeDto: ToggleLikeDto) {
-        return this.likesService.toggle(toggleLikeDto.blogId, user);
-    }
+  @Post()
+  toggle(
+    @CurrentUser() user: JwtPayload,
+    @Body() toggleLikeDto: ToggleLikeDto,
+  ) {
+    return this.likesService.toggle(toggleLikeDto.blogId, user);
+  }
 
-    @Public()
-    @Get('blog/:blogId/count')
-    getLikeCount(@Param('blogId') blogId: string) {
-        return this.likesService.getLikeCount(blogId);
-    }
+  @Public()
+  @Get('blog/:blogId/count')
+  getLikeCount(@Param('blogId') blogId: string) {
+    return this.likesService.getLikeCount(blogId);
+  }
 
-    @Get('blog/:blogId/status')
-    hasUserLiked(@Param('blogId') blogId: string, @CurrentUser() user: JwtPayload) {
-        return this.likesService.hasUserLiked(blogId, user.sub);
-    }
+  @Get('blog/:blogId/status')
+  hasUserLiked(
+    @Param('blogId') blogId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.likesService.hasUserLiked(blogId, user.sub);
+  }
 
-    @Get('my-likes')
-    getUserLikedBlogs(@CurrentUser() user: JwtPayload) {
-        return this.likesService.getUserLikedBlogs(user.sub);
-    }
+  @Get('my-likes')
+  getUserLikedBlogs(@CurrentUser() user: JwtPayload) {
+    return this.likesService.getUserLikedBlogs(user.sub);
+  }
 }

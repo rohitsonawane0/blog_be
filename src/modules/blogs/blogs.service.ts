@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,8 +22,7 @@ export class BlogsService {
     @InjectRepository(Blog)
     private readonly blogRepository: Repository<Blog>,
     private readonly categoriesService: CategoriesService,
-
-  ) { }
+  ) {}
 
   async create(createBlogDto: CreateBlogDto, user: JwtPayload) {
     if (createBlogDto.categoryId) {
@@ -65,7 +68,7 @@ export class BlogsService {
           id: true,
           name: true,
           slug: true,
-        }
+        },
       },
       order: { createdAt: 'DESC' },
       skip,
@@ -95,7 +98,7 @@ export class BlogsService {
           id: true,
           name: true,
           slug: true,
-        }
+        },
       },
     });
     if (!blog) {
@@ -126,7 +129,7 @@ export class BlogsService {
           id: true,
           name: true,
           slug: true,
-        }
+        },
       },
     });
     if (!blog) {
@@ -165,7 +168,9 @@ export class BlogsService {
       await this.categoriesService.findOne(categoryId);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        throw new BadRequestException(`Category with ID ${categoryId} does not exist`);
+        throw new BadRequestException(
+          `Category with ID ${categoryId} does not exist`,
+        );
       }
       throw error;
     }
@@ -177,8 +182,8 @@ export class BlogsService {
     });
 
     if (tags.length !== tagIds.length) {
-      const foundIds = tags.map(t => t.id);
-      const missingIds = tagIds.filter(id => !foundIds.includes(id));
+      const foundIds = tags.map((t) => t.id);
+      const missingIds = tagIds.filter((id) => !foundIds.includes(id));
       throw new BadRequestException(`Tags not found: ${missingIds.join(', ')}`);
     }
 
@@ -209,5 +214,8 @@ export class BlogsService {
 
     return slug;
   }
-}
 
+  async deleteAllBlogs() {
+    await this.blogRepository.deleteAll();
+  }
+}
