@@ -4,7 +4,7 @@ on:
   push: [main]
 
   runs-on: ubuntu-latest
-  job: setup and build
+  jobs: setup and build
   steps:
     - name: Chceckout
       uses: actions/checkout@4
