@@ -1,7 +1,8 @@
 name: build & deploy
 
 on:
-  push: [main]
+  push:
+    branches: [main]
 
   runs-on: ubuntu-latest
   jobs: setup and build
