@@ -1,0 +1,25 @@
+name: build & deploy
+
+on:
+  push: [main]
+
+  runs-on: ubuntu-latest
+  job: setup and build
+  steps:
+    - name: Chceckout
+      uses: actions/checkout@4
+    - name: Setup pnpm
+      uses: pnpm/action-setup@4
+      with:
+        version: 9
+    - name: Setup nodejs
+      uses: actions/setup-node@4
+      with:
+        version: '24'
+    - name: Install dep
+      run: pnpm i --frozen-lockfile
+    - name: Build
+      run: pnpm run build
+    - name: Test
+      run: pnpm run test
+      continue-on-error: true
