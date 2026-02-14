@@ -5,7 +5,7 @@ on:
     branches: [main]
 
   jobs:
-    setup and build:
+    setup-and-build:
       runs-on: ubuntu-latest
       steps:
         - name: Chceckout
@@ -17,7 +17,8 @@ on:
         - name: Setup nodejs
           uses: actions/setup-node@4
           with:
-            version: '24'
+            node-version: '24'
+            cache: pnpm
         - name: Install dep
           run: pnpm i --frozen-lockfile
         - name: Build
