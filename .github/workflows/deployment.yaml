@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
 
-  jobs:
+jobs:
     setup-and-build:
       runs-on: ubuntu-latest
       steps:
-        - name: Chceckout
+        - name: Checkout
           uses: actions/checkout@4
         - name: Setup pnpm
           uses: pnpm/action-setup@4
