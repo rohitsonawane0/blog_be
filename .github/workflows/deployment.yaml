@@ -22,6 +22,7 @@ jobs:
 
       - name: Install dep
         run: pnpm install --frozen-lockfile
+        working-directory: ./backend
       - name: Build
         run: pnpm run build
       - name: Test
