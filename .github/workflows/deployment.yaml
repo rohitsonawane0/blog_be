@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-node@v6.2.0
         with:
           node-version: '24'
-          cache: pnpm
+
       - name: Install dep
         run: pnpm i --frozen-lockfile
       - name: Build
