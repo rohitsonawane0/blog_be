@@ -14,9 +14,22 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from './database/connect.database';
 import { RoleGuard } from './modules/auth/guards/role.guard';
 import { LikesModule } from './modules/likes/likes.module';
-
+//k
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), TypeOrmModule.forRootAsync({ inject: [ConfigService], useFactory: typeOrmConfig }), UsersModule, AuthModule, BlogsModule, CommentsModule, CategoriesModule, TagsModule, LikesModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: typeOrmConfig,
+    }),
+    UsersModule,
+    AuthModule,
+    BlogsModule,
+    CommentsModule,
+    CategoriesModule,
+    TagsModule,
+    LikesModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
@@ -30,4 +43,4 @@ import { LikesModule } from './modules/likes/likes.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
