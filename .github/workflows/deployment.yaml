@@ -27,3 +27,20 @@ jobs:
       - name: Test
         run: pnpm run test
         continue-on-error: true
+      - name: upload artifact
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: dist-file
+          path: dist
+  deploy:
+    needs: setup-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: get build
+        uses: actions/download-artifact@v6.0.0
+        with:
+          name: dist-file
+      - name: Output comtent
+        run: ls
+      - name: deploy
+        run: echo "Deploying"
