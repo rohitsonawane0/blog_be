@@ -67,11 +67,11 @@ jobs:
             
             # Run the new container
             # -d: Detached mode
-            # -p 3000:3000: Map port 3000 on host to port 3000 in container
+            # -p 3001:3001: Map port 3000 on host to port 3000 in container
             # --name blog-backend: Name the container for easy management
             docker run -d \
               --name blog-backend \
-              -p 3000:3000 \
+              -p 3001:3001 \
               --restart unless-stopped \
               ghcr.io/${{ env.IMAGE_NAME }}:latest
               
