@@ -1,46 +1,79 @@
-name: build & deploy
+name: Deploy to EC2
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  setup-and-build:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6.0.2
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4.2.0
+      - name: Log in to the Container Registry
+        uses: docker/login-action@v3
         with:
-          version: 10
-      - name: Setup nodejs
-        uses: actions/setup-node@v6.2.0
-        with:
-          node-version: '24'
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dep
-        run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm run build
-      - name: Test
-        run: pnpm run test
-        continue-on-error: true
-      - name: upload artifact
-        uses: actions/upload-artifact@v6.0.0
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          name: dist-file
-          path: dist
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
   deploy:
-    needs: setup-and-build
+    needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
-      - name: get build
-        uses: actions/download-artifact@v6.0.0
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          name: dist-file
-      - name: Output comtent
-        run: ls
-      - name: deploy
-        run: echo "Deploying"
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Log in to GHCR on the EC2 instance
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Stop and remove existing container
+            docker stop blog-backend || true
+            docker rm blog-backend || true
+            
+            # Pull the latest image
+            docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest
+            
+            # Run the new container
+            # -d: Detached mode
+            # -p 3000:3000: Map port 3000 on host to port 3000 in container
+            # --name blog-backend: Name the container for easy management
+            docker run -d \
+              --name blog-backend \
+              -p 3000:3000 \
+              --restart unless-stopped \
+              ghcr.io/${{ env.IMAGE_NAME }}:latest
+              
+            # Clean up unused images to save space
+            docker image prune -a -f
