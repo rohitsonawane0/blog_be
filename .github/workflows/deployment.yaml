@@ -69,17 +69,7 @@ jobs:
             # -d: Detached mode
             # -p 3001:3001: Map port 3000 on host to port 3000 in container
             # --name blog-backend: Name the container for easy management
-            docker run -d \
-              --name blog-backend \
-              -p 3001:3001 \
-              --restart unless-stopped \
-              --env DATABASE_URL=${{ secrets.DATABASE_URL }} \
-              --env JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              --env JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} \
-              --env JWT_ACCESS_EXPIRATION_TIME=${{ secrets.JWT_ACCESS_EXPIRATION_TIME }} \
-              --env JWT_REFRESH_EXPIRATION_TIME=${{ secrets.JWT_REFRESH_EXPIRATION_TIME }} \
-              --env PORT=3001 \
-              ghcr.io/${{ env.IMAGE_NAME }}:latest
+            docker run -d --name blog-backend -p 3001:3001 --restart unless-stopped --env DATABASE_URL=${{ secrets.DATABASE_URL }} --env JWT_SECRET=${{ secrets.JWT_SECRET }} --env JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }} --env JWT_ACCESS_EXPIRATION_TIME=${{ secrets.JWT_ACCESS_EXPIRATION_TIME }} --env JWT_REFRESH_EXPIRATION_TIME=${{ secrets.JWT_REFRESH_EXPIRATION_TIME }} --env PORT=3001 ghcr.io/${{ env.IMAGE_NAME }}:latest
               
             # Clean up unused images to save space
             docker image prune -a -f
